@@ -1,5 +1,5 @@
 
-import actors.Buffer;
+import actors.BufferNet;
 import actors.Consumer;
 import actors.Producer;
 import org.jcsp.lang.*;
@@ -7,7 +7,6 @@ import org.jcsp.lang.*;
 
 
 public final class Main {
-    // Define color constants
     public static final String TEXT_RESET = "\u001B[0m";
     public static final String TEXT_BLACK = "\u001B[30m";
     public static final String TEXT_RED = "\u001B[31m";
@@ -19,38 +18,48 @@ public final class Main {
     public static final String TEXT_WHITE = "\u001B[37m";
 
     public static void main(String[] args) {
-        final int producersNumber = 100;
-        final int consumersNumber = 100;
-        final int bufferSize = 500;
-        final int productionsNumber = 100000;
+        final int producersNumber = 10;
+        final int consumersNumber = 10;
+        final int bufferSize = 50;
+        final int productionsNumber = 100;
 
 
-        final One2OneChannelInt[] productionsChannels = Channel.one2oneIntArray(producersNumber);
-        final One2OneChannelInt[] requestChannels = Channel.one2oneIntArray(consumersNumber);
-        final One2OneChannelInt[] consumptionChannels = Channel.one2oneIntArray(consumersNumber);
-
-        final ChannelOutputInt[] productionsOut = Channel.getOutputArray(productionsChannels);
-        final AltingChannelInputInt[] productionIn = Channel.getInputArray(productionsChannels);
-        final AltingChannelInputInt[] reqIn = Channel.getInputArray(requestChannels);
-        final ChannelOutputInt[] reqOut = Channel.getOutputArray(requestChannels);
-
-        final ChannelOutputInt[] consumptionOut = Channel.getOutputArray(consumptionChannels);
-        final ChannelInputInt[] consumptionIn = Channel.getInputArray(consumptionChannels);
 
 
-        CSProcess[] actorsList = new CSProcess[producersNumber + consumersNumber + 1];
+        CSProcess[] producersList = new CSProcess[producersNumber];
+        CSProcess[] consumersList = new CSProcess[consumersNumber];
+
+
+
+
+        int[] layersSizes = new int[3];
+        layersSizes[0] = producersNumber;
+        layersSizes[1] = 4;
+        layersSizes[2] = consumersNumber;
+
+        BufferNet bufferNet = new BufferNet(layersSizes);
+
         for (int i=0; i<producersNumber; i++) {
-            actorsList[i] = new Producer(i, productionsOut[i], productionsNumber);
+            producersList[i] = new Producer(
+                    i,
+                    Channel.getInputArray(bufferNet.netReqOut)[0],
+                    Channel.getOutputArray(bufferNet.netItemIn)[0],
+                    productionsNumber);
         }
         for (int i=0; i<consumersNumber; i++) {
-            actorsList[i + producersNumber] = new Consumer(i, reqOut[i], consumptionIn[i]);
+            consumersList[i] = new Consumer(
+                    i,
+                    Channel.getOutputArray(bufferNet.netReqIn)[0],
+                    Channel.getInputArray(bufferNet.netItemOut)[0]
+            );
         }
 
-        actorsList[consumersNumber + producersNumber] = new Buffer(bufferSize, productionIn, reqIn, consumptionOut);
 
-
-        Parallel par = new Parallel(actorsList);
-        par.run();
-
+        Parallel producersPar = new Parallel(producersList);
+        producersPar.run();
+        Parallel consumersPar = new Parallel(consumersList);
+        consumersPar.run();
+        Parallel netActors = new Parallel(bufferNet.getActors());
+        netActors.run();
     }
 }
