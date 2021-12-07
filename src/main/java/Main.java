@@ -19,10 +19,15 @@ public final class Main {
     public static final String TEXT_WHITE = "\u001B[37m";
 
     public static void main(String[] args) {
+        final int producersNumber = 10;
+        final int consumersNumber = 10;
+        final int bufferSize = 20;
+        final int productionsNumber = 10;
 
-        final One2OneChannelInt[] productionsChannels = Channel.one2oneIntArray(2);
-        final One2OneChannelInt[] requestChannels = Channel.one2oneIntArray(2);
-        final One2OneChannelInt[] consumptionChannels = Channel.one2oneIntArray(2);
+
+        final One2OneChannelInt[] productionsChannels = Channel.one2oneIntArray(producersNumber);
+        final One2OneChannelInt[] requestChannels = Channel.one2oneIntArray(consumersNumber);
+        final One2OneChannelInt[] consumptionChannels = Channel.one2oneIntArray(consumersNumber);
 
         final ChannelOutputInt[] productionsOut = Channel.getOutputArray(productionsChannels);
         final AltingChannelInputInt[] productionIn = Channel.getInputArray(productionsChannels);
@@ -33,16 +38,16 @@ public final class Main {
         final ChannelInputInt[] consumptionIn = Channel.getInputArray(consumptionChannels);
 
 
-        final int productionsNumber = 10;
-        final int bufferSize = 10;
+        CSProcess[] actorsList = new CSProcess[productionsNumber + consumersNumber + 1];
+        for (int i=0; i<producersNumber; i++) {
+            actorsList[i] = new Producer(i, productionsOut[i], productionsNumber);
+        }
+        for (int i=0; i<consumersNumber; i++) {
+            actorsList[i + producersNumber] = new Consumer(i, reqOut[i], consumptionIn[i]);
+        }
 
-        CSProcess[] actorsList = {
-                new Producer(0, productionsOut[0], 0, productionsNumber),
-                new Producer(1, productionsOut[1], 100, productionsNumber),
-                new Buffer(bufferSize, productionIn, reqIn, consumptionOut),
-                new Consumer(0, reqOut[0], consumptionIn[0]),
-                new Consumer(1, reqOut[1], consumptionIn[1])
-        };
+        actorsList[consumersNumber + producersNumber] = new Buffer(bufferSize, productionIn, reqIn, consumptionOut);
+
 
         Parallel par = new Parallel(actorsList);
         par.run();
