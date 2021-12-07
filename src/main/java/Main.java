@@ -19,10 +19,10 @@ public final class Main {
     public static final String TEXT_WHITE = "\u001B[37m";
 
     public static void main(String[] args) {
-        final int producersNumber = 10;
-        final int consumersNumber = 10;
-        final int bufferSize = 20;
-        final int productionsNumber = 10;
+        final int producersNumber = 100;
+        final int consumersNumber = 100;
+        final int bufferSize = 500;
+        final int productionsNumber = 100000;
 
 
         final One2OneChannelInt[] productionsChannels = Channel.one2oneIntArray(producersNumber);
@@ -38,7 +38,7 @@ public final class Main {
         final ChannelInputInt[] consumptionIn = Channel.getInputArray(consumptionChannels);
 
 
-        CSProcess[] actorsList = new CSProcess[productionsNumber + consumersNumber + 1];
+        CSProcess[] actorsList = new CSProcess[producersNumber + consumersNumber + 1];
         for (int i=0; i<producersNumber; i++) {
             actorsList[i] = new Producer(i, productionsOut[i], productionsNumber);
         }

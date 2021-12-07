@@ -82,9 +82,10 @@ public class Buffer implements CSProcess {
                     takeFrom++;
                     consumptionOut[index - reqInShift].write(item);
                 } else if (runningProducers == 0) {
+                    System.out.println(index - reqInShift + " " + -1);
+
                     reqIn[index - reqInShift].read();
                     consumptionOut[index - reqInShift].write(-1);
-                    System.out.println(index + " " + -1);
                     runningConsumers--;
                 }
             }
