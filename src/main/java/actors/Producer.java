@@ -13,15 +13,9 @@ public class Producer implements CSProcess {
     private final int index;
     private final int productionsNumber;
 
-    public Producer(int index, final ChannelOutputInt out, int start) {
-        channel = out;
-        this.index = index;
-        this.start = start;
-        productionsNumber = defaultProductionsNumber;
-    }
 
-    public Producer(int index, final ChannelOutputInt out, int start, int productionsNumber) {
-        channel = out;
+    public Producer(int index, final ChannelOutputInt productionsOut, int start, int productionsNumber) {
+        channel = productionsOut;
         this.index = index;
         this.start = start;
         this.productionsNumber = productionsNumber;
@@ -31,7 +25,6 @@ public class Producer implements CSProcess {
         int item;
         for (int k = 0; k < productionsNumber; k++) {
             item = (int) (Math.random() * 100) + 1 + start;
-            System.out.println("p " + index + ": " + item);
             channel.write(item);
         }
         channel.write(-1);

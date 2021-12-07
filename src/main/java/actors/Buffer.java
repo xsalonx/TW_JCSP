@@ -6,55 +6,64 @@ import org.jcsp.lang.*;
  */
 
 public class Buffer implements CSProcess {
-    private final AltingChannelInputInt[] in; // Input from Producer
-    private final AltingChannelInputInt[] req; // Request for data from Consumer
-    private final ChannelOutputInt[] out; // Output to Consumer
+    private final AltingChannelInputInt[] productionIn;
+    private final AltingChannelInputInt[] reqIn;
+    private final ChannelOutputInt[] consumptionOut;
 
-    private final int[] buffer = new int[10];
-    // Subscripts for buffer
-    int hd = -1;
-    int tl = -1;
+    private int runningProducers;
+    private int runningConsumers;
 
-    public Buffer(final AltingChannelInputInt[] in, final
-    AltingChannelInputInt[] req, final ChannelOutputInt[] out) {
-        this.in = in;
-        this.req = req;
-        this.out = out;
+    private final int[] buffer;
+    private final int bufferSize;
+    int hd = 0;
+    int tl = 0;
+
+    public Buffer(int size, final AltingChannelInputInt[] productionIn, final
+    AltingChannelInputInt[] reqIn, final ChannelOutputInt[] consumptionOut) {
+        this.buffer = new int[size];
+        this.bufferSize = size;
+
+        this.productionIn = productionIn;
+        this.reqIn = reqIn;
+        this.consumptionOut = consumptionOut;
+
+        runningProducers = productionIn.length;
+        runningConsumers = consumptionOut.length;
     }
 
     public void run() {
-        final Guard[] guards = {in[0], in[1], req[0], req[1]};
+        final Guard[] guards = {productionIn[0], productionIn[1], reqIn[0], reqIn[1]};
         final Alternative alt = new Alternative(guards);
-        int runningActors = 4; // Number of processes running
-        while (runningActors > 0) {
+        while (runningConsumers > 0 || runningProducers > 0) {
             int index = alt.select();
             switch (index) {
                 case 0:
-                case 1: // A Producer is ready to send
-                    if (hd < tl + 11) // Space available
-                    {
-                        int item = in[index].read();
+                case 1:
+                    if (hd < tl + bufferSize) {
+                        int item = productionIn[index].read();
+                        System.out.println("from p " + index + ": " + item);
                         if (item < 0)
-                            runningActors--;
+                            runningProducers--;
                         else {
-                            hd++;
                             buffer[hd % buffer.length] = item;
+                            hd++;
                         }
+                    } else if (runningConsumers == 0) {
+                        // send information to producer
                     }
                     break;
                 case 2:
-                case 3: // A Consumer is ready to read
-                    if (tl < hd) // Item(s) available
-                    {
-                        req[index - 2].read(); // Read and discard request
-                        tl++;
+                case 3:
+                    if (tl < hd) {
+                        reqIn[index - 2].read();
                         int item = buffer[tl % buffer.length];
-                        out[index - 2].write(item);
-                    } else if (runningActors <= 2) // Signal consumer to end
-                    {
-                        req[index - 2].read(); // Read and discard request
-                        out[index - 2].write(-1); // Signal end
-                        runningActors--;
+                        tl++;
+                        consumptionOut[index - 2].write(item);
+                    } else if (runningProducers == 0) {
+                        reqIn[index - 2].read();
+                        consumptionOut[index - 2].write(-1);
+                        System.out.println(index + " " + -1);
+                        runningConsumers--;
                     }
                     break;
             }

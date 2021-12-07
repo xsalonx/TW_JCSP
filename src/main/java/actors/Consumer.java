@@ -11,10 +11,10 @@ public class Consumer implements CSProcess {
 
     private final int index;
 
-    public Consumer(int index, final ChannelOutputInt req, final ChannelInputInt in) {
+    public Consumer(int index, final ChannelOutputInt reqOut, final ChannelInputInt consumptionIn) {
         this.index = index;
-        this.req = req;
-        this.in = in;
+        this.req = reqOut;
+        this.in = consumptionIn;
     }
 
     public void run() {
