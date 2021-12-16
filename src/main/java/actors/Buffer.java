@@ -59,14 +59,14 @@ public class Buffer implements CSProcess {
 
         int index;
         int item;
-        for (int i=0; i<itemIn.length; i++) {
+        for (int i=0; i<reqOut.length; i++) {
             reqOut[i].write(0);
         }
 
         while (runningSuccessors > 0 || runningPredecessors > 0) {
             index = alt.select();
 
-            if (index < 1) {
+            if (index < shift) {
                 if (putIn <= takeFrom + bufferSize) {
                     item = itemIn[index].read();
                     System.out.println("from p " + index + ": " + item);
