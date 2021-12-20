@@ -6,9 +6,6 @@ import org.jcsp.lang.*;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
 
@@ -24,41 +21,40 @@ public final class Main {
     public static final String TEXT_WHITE = "\u001B[37m";
 
     public static void main(String[] args) {
-        final int producersNumber = 1;
-        final int consumersNumber = 1;
-        final int bufferSize = 10;
-        final int productionsNumber = 10;
+        final int producersNumber = 10;
+        final int consumersNumber = 10;
+        final int productionsNumber = 50;
 
 
         CSProcess[] producersList = new CSProcess[producersNumber];
         CSProcess[] consumersList = new CSProcess[consumersNumber];
 
 
-        int[] layersSizes = new int[3];
+        int[] layersSizes = new int[4];
         layersSizes[0] = producersNumber;
-        layersSizes[1] = 4;
-        layersSizes[2] = consumersNumber;
+        layersSizes[1] = 10;
+        layersSizes[2] = 10;
+        layersSizes[3] = consumersNumber;
 
         BufferNet bufferNet = new BufferNet(layersSizes);
 
         for (int i=0; i<producersNumber; i++) {
             producersList[i] = new Producer(
                     i,
-                    Channel.getInputArray(bufferNet.netReqOut)[i],
-                    Channel.getOutputArray(bufferNet.netItemIn)[i],
+                    Channel.getInputArray(bufferNet.netReqOutPC)[i],
+                    Channel.getOutputArray(bufferNet.netItemInPC)[i],
                     productionsNumber);
         }
         for (int i=0; i<consumersNumber; i++) {
             consumersList[i] = new Consumer(
                     i,
-                    Channel.getOutputArray(bufferNet.netReqIn)[i],
-                    Channel.getInputArray(bufferNet.netItemOut)[i]
+                    Channel.getOutputArray(bufferNet.netReqInPC)[i],
+                    Channel.getInputArray(bufferNet.netItemOutPC)[i]
             );
         }
 
         CSProcess[] actors = concatWithStream(producersList, consumersList);
         actors = concatWithStream(actors, bufferNet.getActors());
-        System.out.println(Arrays.toString(bufferNet.getActors()));
         Parallel parallel = new Parallel(actors);
         parallel.run();
     }

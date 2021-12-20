@@ -22,11 +22,14 @@ public class Producer implements CSProcess {
         for (int k = 0; k < productionsNumber; k++) {
             reqIn.read();
             item = (int) (Math.random() * 100) + 1;
-            System.out.println("p " + index + ": " + item);
+            System.out.println("p " + index + " produced: " + item);
             itemOut.write(item);
+            System.out.println("p " + (k+1) + "/" + productionsNumber + " " + index + " sent: " + item);
         }
+        reqIn.read();
+        System.out.println("producer " + index + " wants to end");
         itemOut.write(-1);
-        System.out.println("Producer " + index + " ended.");
+        System.out.println("producer " + index + " ended.");
     }
 
 }

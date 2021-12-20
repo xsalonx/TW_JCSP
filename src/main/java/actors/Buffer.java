@@ -23,8 +23,10 @@ public class Buffer implements CSProcess {
     int takeFrom = 0;
 
 
-    public Buffer(int size,  final ChannelOutputInt[] reqOut, final AltingChannelInputInt itemIn[],
+    public Buffer(int size,  final ChannelOutputInt[] reqOut, final AltingChannelInputInt[] itemIn,
                   final AltingChannelInputInt[] reqIn, final ChannelOutputInt[] itemOut) {
+        assert reqIn.length == itemOut.length;
+
         this.buffer = new int[size];
         this.bufferSize = size;
 
@@ -35,7 +37,7 @@ public class Buffer implements CSProcess {
         this.itemOut = itemOut;
         this.shift = itemIn.length;;
 
-        runningPredecessors = 1;
+        runningPredecessors = reqOut.length;
         runningSuccessors = itemOut.length;
     }
 
@@ -69,7 +71,7 @@ public class Buffer implements CSProcess {
             if (index < shift) {
                 if (putIn <= takeFrom + bufferSize) {
                     item = itemIn[index].read();
-                    System.out.println("from p " + index + ": " + item);
+                    System.out.println("b from " + index + ": " + item);
                     if (item < 0)
                         runningPredecessors--;
                     else {
@@ -84,9 +86,11 @@ public class Buffer implements CSProcess {
             } else {
                 if (takeFrom < putIn) {
                     reqIn[index - shift].read();
+                    System.out.println("b " + " get req from " + (index - shift));
                     item = buffer[takeFrom % buffer.length];
                     takeFrom++;
                     itemOut[index - shift].write(item);
+                    System.out.println("b " + "send to " + (index - shift));
 
                 } else if (runningPredecessors == 0) {
                     System.out.println(index - shift + " " + -1);

@@ -14,8 +14,8 @@ public class Connector implements CSProcess{
     private final ChannelOutputInt itemOut;
 
 
-    public Connector(int from, int to, final ChannelInputInt itemIn, final ChannelOutputInt itemOut,
-                     ChannelOutputInt reqOut, final ChannelInputInt reqIn) {
+    public Connector(int from, int to, ChannelOutputInt reqOut, final ChannelInputInt itemIn,
+                     final ChannelInputInt reqIn, final ChannelOutputInt itemOut) {
         this.from = from;
         this.to = to;
         this.reqIn = reqIn;
@@ -28,13 +28,11 @@ public class Connector implements CSProcess{
         int item;
         while (true) {
             item = reqIn.read();
-            System.out.println("connector req in " + item);
-            if (item < 0)
-                break;
-            reqOut.write(1);
-            System.out.println("connector req out ");
+//            System.out.println("connector req in " + item);
+            reqOut.write(item);
+//            System.out.println("connector req out ");
             item = itemIn.read();
-            System.out.println("connector item in " + item);
+//            System.out.println("connector item in " + item);
             itemOut.write(item);
             if (item < 0)
                 break;
