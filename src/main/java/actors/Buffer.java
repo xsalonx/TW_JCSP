@@ -2,21 +2,20 @@ package actors;
 
 import org.jcsp.lang.*;
 
-import java.util.ServiceConfigurationError;
-
 /** Buffer class: Manages communication between Producer2
  * and Consumer2 classes.
  */
 
 public class Buffer implements CSProcess {
-    private final AltingChannelInputInt[] productionIn;
-    private final int productionInShift = 0;
+    private final AltingChannelInputInt[] itemIn;
     private final AltingChannelInputInt[] reqIn;
-    private final int reqInShift;
-    private final ChannelOutputInt[] consumptionOut;
+    private final ChannelOutputInt[] itemOut;
+    private final ChannelOutputInt[] reqOut;
 
-    private int runningProducers;
-    private int runningConsumers;
+    private final int shift;
+
+    private int runningPredecessors;
+    private int runningSuccessors;
 
     private final int[] buffer;
     private final int bufferSize;
@@ -24,24 +23,28 @@ public class Buffer implements CSProcess {
     int takeFrom = 0;
 
 
-    public Buffer(int size, final AltingChannelInputInt[] productionIn, final
-    AltingChannelInputInt[] reqIn, final ChannelOutputInt[] consumptionOut) {
+    public Buffer(int size,  final ChannelOutputInt[] reqOut, final AltingChannelInputInt[] itemIn,
+                  final AltingChannelInputInt[] reqIn, final ChannelOutputInt[] itemOut) {
+        assert reqIn.length == itemOut.length;
+
         this.buffer = new int[size];
         this.bufferSize = size;
 
-        this.productionIn = productionIn;
         this.reqIn = reqIn;
-        reqInShift = productionIn.length;
-        this.consumptionOut = consumptionOut;
+        this.itemIn = itemIn;
 
-        runningProducers = productionIn.length;
-        runningConsumers = consumptionOut.length;
+        this.reqOut = reqOut;
+        this.itemOut = itemOut;
+        this.shift = itemIn.length;;
+
+        runningPredecessors = reqOut.length;
+        runningSuccessors = itemOut.length;
     }
 
     private Guard[] getGuards() {
-        Guard[] guards = new Guard[productionIn.length + reqIn.length];
+        Guard[] guards = new Guard[itemIn.length + reqIn.length];
         int i = 0;
-        for (Guard g : productionIn) {
+        for (Guard g : itemIn) {
             guards[i] = g;
             i++;
         }
@@ -49,8 +52,6 @@ public class Buffer implements CSProcess {
             guards[i] = g;
             i++;
         }
-
-
         return guards;
     }
 
@@ -59,34 +60,44 @@ public class Buffer implements CSProcess {
         final Alternative alt = new Alternative(guards);
 
         int index;
-        while (runningConsumers > 0 || runningProducers > 0) {
+        int item;
+        for (int i=0; i<reqOut.length; i++) {
+            reqOut[i].write(0);
+        }
+
+        while (runningSuccessors > 0 || runningPredecessors > 0) {
             index = alt.select();
 
-            if (index < productionIn.length) {
+            if (index < shift) {
                 if (putIn <= takeFrom + bufferSize) {
-                    int item = productionIn[index].read();
-                    System.out.println("from p " + index + ": " + item);
+                    item = itemIn[index].read();
+                    System.out.println("b from " + index + ": " + item);
                     if (item < 0)
-                        runningProducers--;
+                        runningPredecessors--;
                     else {
                         buffer[putIn % buffer.length] = item;
                         putIn++;
+                        reqOut[index].write(0);
                     }
-                } else if (runningConsumers == 0) {
-                    // send information to producer
+                } else if (runningSuccessors == 0) {
+                    //TODO send information to producer
                 }
+
             } else {
                 if (takeFrom < putIn) {
-                    reqIn[index - reqInShift].read();
-                    int item = buffer[takeFrom % buffer.length];
+                    reqIn[index - shift].read();
+                    System.out.println("b " + " get req from " + (index - shift));
+                    item = buffer[takeFrom % buffer.length];
                     takeFrom++;
-                    consumptionOut[index - reqInShift].write(item);
-                } else if (runningProducers == 0) {
-                    System.out.println(index - reqInShift + " " + -1);
+                    itemOut[index - shift].write(item);
+                    System.out.println("b " + "send to " + (index - shift));
 
-                    reqIn[index - reqInShift].read();
-                    consumptionOut[index - reqInShift].write(-1);
-                    runningConsumers--;
+                } else if (runningPredecessors == 0) {
+                    System.out.println(index - shift + " " + -1);
+
+                    reqIn[index - shift].read();
+                    itemOut[index - shift].write(-1);
+                    runningSuccessors--;
                 }
             }
         }

@@ -6,25 +6,26 @@ import org.jcsp.lang.*;
  * terminates when a negative value is read.
  */
 public class Consumer implements CSProcess {
-    private final ChannelInputInt in;
-    private final ChannelOutputInt req;
+    private final ChannelInputInt itemIn;
+    private final ChannelOutputInt reqOut;
 
     private final int index;
 
-    public Consumer(int index, final ChannelOutputInt reqOut, final ChannelInputInt consumptionIn) {
+    public Consumer(int index, final ChannelOutputInt reqOut, final ChannelInputInt itemIn) {
         this.index = index;
-        this.req = reqOut;
-        this.in = consumptionIn;
+        this.reqOut = reqOut;
+        this.itemIn = itemIn;
     }
 
     public void run() {
         int item;
         while (true) {
-            req.write(0);
-            item = in.read();
+            reqOut.write(0);
+            System.out.println("c " + index + " sent req");
+            item = itemIn.read();
+            System.out.println("c " + index + " item: " + item);
             if (item < 0)
                 break;
-            System.out.println("c " + index + ": " + item);
         }
         System.out.println("Consumer " + index + " ended.");
     }

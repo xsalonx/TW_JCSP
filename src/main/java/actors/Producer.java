@@ -5,13 +5,14 @@ import org.jcsp.lang.*;
 
 public class Producer implements CSProcess {
 
-    private final ChannelOutputInt channel;
+    private final ChannelOutputInt itemOut;
+    private final ChannelInputInt reqIn;
     private final int index;
     private final int productionsNumber;
 
-
-    public Producer(int index, final ChannelOutputInt productionsOut, int productionsNumber) {
-        channel = productionsOut;
+    public Producer(int index, final ChannelInputInt reqIn, final ChannelOutputInt itemOut, int productionsNumber) {
+        this.itemOut = itemOut;
+        this.reqIn = reqIn;
         this.index = index;
         this.productionsNumber = productionsNumber;
     }
@@ -19,11 +20,16 @@ public class Producer implements CSProcess {
     public void run() {
         int item;
         for (int k = 0; k < productionsNumber; k++) {
+            reqIn.read();
             item = (int) (Math.random() * 100) + 1;
-            channel.write(item);
+            System.out.println("p " + index + " produced: " + item);
+            itemOut.write(item);
+            System.out.println("p " + (k+1) + "/" + productionsNumber + " " + index + " sent: " + item);
         }
-        channel.write(-1);
-        System.out.println("Producer " + index + " ended.");
+        reqIn.read();
+        System.out.println("producer " + index + " wants to end");
+        itemOut.write(-1);
+        System.out.println("producer " + index + " ended.");
     }
 
 }
