@@ -25,8 +25,8 @@ public class Consumer extends Actor implements CSProcess {
                 break;
             this.actorState.incrementPassedItems();
             sleepActor();
-            System.out.println("c:" + index + " received " + item);
+//            System.out.println("c:" + index + " received " + item);
         }
-        System.out.println("Consumer " + index + " ended.");
+//        System.out.println("Consumer " + index + " ended.");
     }
 }

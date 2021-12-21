@@ -1,8 +1,5 @@
 
-import actors.Actor;
-import actors.BufferNet;
-import actors.Consumer;
-import actors.Producer;
+import actors.*;
 import org.jcsp.lang.*;
 
 import java.lang.reflect.Array;
@@ -11,15 +8,8 @@ import java.util.stream.Stream;
 
 
 public final class Main {
-    public static final String TEXT_RESET = "\u001B[0m";
-    public static final String TEXT_BLACK = "\u001B[30m";
-    public static final String TEXT_RED = "\u001B[31m";
-    public static final String TEXT_GREEN = "\u001B[32m";
-    public static final String TEXT_YELLOW = "\u001B[33m";
-    public static final String TEXT_BLUE = "\u001B[34m";
-    public static final String TEXT_PURPLE = "\u001B[35m";
-    public static final String TEXT_CYAN = "\u001B[36m";
-    public static final String TEXT_WHITE = "\u001B[37m";
+
+
 
     private static final int delimitingLineLength = 50;
     private static final String logDelimitingLineStr = "_";
@@ -30,17 +20,18 @@ public final class Main {
     static BufferNet bufferNet;
 
     public static void main(String[] args) {
-        final int producersNumber = 10;
-        final int consumersNumber = 10;
-        final int productionsNumber = 500;
+        final int producersNumber = Integer.parseInt(args[0]);
+        final int consumersNumber = Integer.parseInt(args[1]);
+        final int productionsNumber = Integer.parseInt(args[2]);
 
 
-        int[] layersSizes = new int[5];
+        int layersNumb = args.length - 1;
+        int[] layersSizes = new int[layersNumb];
         layersSizes[0] = producersNumber;
-        layersSizes[1] = 1;
-        layersSizes[2] = 4;
-        layersSizes[3] = 4;
-        layersSizes[4] = consumersNumber;
+        for (int i=1; i<layersNumb - 1; i++) {
+            layersSizes[i] = Integer.parseInt(args[i + 2]);
+        }
+        layersSizes[layersNumb - 1] = consumersNumber;
 
         bufferNet = new BufferNet(layersSizes);
 
@@ -66,7 +57,7 @@ public final class Main {
                     i,
                     consumptionReqOutPC[i],
                     itemConsumptionInPC[i],
-                    1*(consumersNumber - i)/2
+                    0//1*(consumersNumber - i)/2
             );
         }
 
@@ -75,7 +66,7 @@ public final class Main {
         Parallel parallel = new Parallel(actors);
         parallel.run();
 
-        System.out.println(getStatistics());
+        System.out.println(getStatistics().replaceAll("\u001B\\[[;\\d]*m", ""));
     }
 
 
@@ -100,7 +91,8 @@ public final class Main {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(title).append(":");
         for (int i=0; i < actors.length; i++) {
-            stringBuilder.append(",").append(i).append(":").append(actors[i].getActorState());
+            stringBuilder.append(",").append(i).append(":")
+                    .append(ConsoleColors.T_GREEN.v).append(actors[i].getActorState()).append(ConsoleColors.T_RESET.v);
         }
         return stringBuilder.toString();
     }

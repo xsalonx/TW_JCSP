@@ -1,5 +1,6 @@
 package actors;
 
+import com.sun.tools.javac.Main;
 import org.jcsp.lang.*;
 
 
@@ -281,7 +282,8 @@ public class BufferNet {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("layer:").append(layerIndex);
         for (int b=0; b < layersSizes[layerIndex]; b++) {
-            stringBuilder.append(",").append(b).append(":").append(buffersLayers[layerIndex][b].actorState);
+            stringBuilder.append(",").append(b).append(":")
+                    .append(ConsoleColors.T_BLUE.v).append(buffersLayers[layerIndex][b].actorState).append(ConsoleColors.T_RESET.v);
         }
         return stringBuilder.toString();
     }
