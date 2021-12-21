@@ -248,26 +248,40 @@ public class BufferNet {
 
         CSProcess[] netActors = new CSProcess[count];
         int j = 0;
-        for (int i = 0; i < buffersLayers.length; i++) {
-            for (int k = 0; k < buffersLayers[i].length; k++) {
-                netActors[j] = buffersLayers[i][k];
-                j++;
-            }
-            for (int k = 0; k < connectorsLayers[i].length; k++) {
-                netActors[j] = connectorsLayers[i][k];
+
+        for (Connector[] connectorsLayer : connectorsLayers) {
+            for (Connector connector : connectorsLayer) {
+                netActors[j] = connector;
                 j++;
             }
         }
+
+        for (Buffer[] buffersLayer : buffersLayers) {
+            for (Buffer buffer : buffersLayer) {
+                netActors[j] = buffer;
+                j++;
+            }
+        }
+
         return netActors;
     }
 
     public String toStringNetStatistics() {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int layerIndex = 0; layerIndex < layersNumb; layerIndex ++) {
-            stringBuilder.append("layer:").append(layerIndex).append("\n");
-            for (int b=0; b < layersSizes[layerIndex]; b++) {
-                stringBuilder.append(b).append(":").append(buffersLayers[layerIndex][b].actorState);
-            }
+        for (int layerIndex = 0; layerIndex < layersNumb - 1; layerIndex ++) {
+            stringBuilder.append(toStringLayer(layerIndex));
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append(toStringLayer(layersNumb - 1));
+
+        return stringBuilder.toString();
+    }
+
+    private String toStringLayer(int layerIndex) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("layer:").append(layerIndex);
+        for (int b=0; b < layersSizes[layerIndex]; b++) {
+            stringBuilder.append(",").append(b).append(":").append(buffersLayers[layerIndex][b].actorState);
         }
         return stringBuilder.toString();
     }

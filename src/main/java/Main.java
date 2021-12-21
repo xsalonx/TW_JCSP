@@ -30,16 +30,17 @@ public final class Main {
     static BufferNet bufferNet;
 
     public static void main(String[] args) {
-        final int producersNumber = 10;
-        final int consumersNumber = 10;
-        final int productionsNumber = 50;
+        final int producersNumber = 1;
+        final int consumersNumber = 1;
+        final int productionsNumber = 5;
 
 
-        int[] layersSizes = new int[4];
+        int[] layersSizes = new int[3];
         layersSizes[0] = producersNumber;
-        layersSizes[1] = 10;
-        layersSizes[2] = 10;
-        layersSizes[3] = consumersNumber;
+        layersSizes[1] = 1;
+//        layersSizes[2] = 4;
+//        layersSizes[3] = 4;
+        layersSizes[2] = consumersNumber;
 
         bufferNet = new BufferNet(layersSizes);
 
@@ -54,7 +55,8 @@ public final class Main {
                     i,
                     productionReqInPC[i],
                     itemProductionOutPC[i],
-                    productionsNumber);
+                    productionsNumber,
+                    0);
         }
 
         ChannelOutputInt[] consumptionReqOutPC = Channel.getOutputArray(bufferNet.netConsumptionReqPC);
@@ -63,17 +65,23 @@ public final class Main {
             consumers[i] = new Consumer(
                     i,
                     consumptionReqOutPC[i],
-                    itemConsumptionInPC[i]
+                    itemConsumptionInPC[i],
+                    1*(consumersNumber - i)/2
             );
         }
 
-        CSProcess[] actors = concatWithStream(castActorsToCSProcess(producers), castActorsToCSProcess(consumers));
-        actors = concatWithStream(actors, bufferNet.getActors());
+        CSProcess[] actors = concatWithStream(castActorsToCSProcess(consumers), castActorsToCSProcess(producers));
+        actors = concatWithStream(bufferNet.getActors(), actors);
         Parallel parallel = new Parallel(actors);
         parallel.run();
 
         System.out.println(getStatistics());
     }
+
+
+
+
+
 
     static <T> T[] concatWithStream(T[] array1, T[] array2) {
         return Stream.concat(Arrays.stream(array1), Arrays.stream(array2))
@@ -90,9 +98,9 @@ public final class Main {
 
     static String toStringStatsFromActorsArray(Actor[] actors, String title) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(title).append(": \n");
+        stringBuilder.append(title).append(":");
         for (int i=0; i < actors.length; i++) {
-            stringBuilder.append(i).append(":").append(actors[i].getActorState());
+            stringBuilder.append(",").append(i).append(":").append(actors[i].getActorState());
         }
         return stringBuilder.toString();
     }
@@ -103,9 +111,9 @@ public final class Main {
 
         stringBuilder.append(toStringStatsFromActorsArray((Actor[]) producers, "producers")).append("\n");
         stringBuilder.append(sectionDelimitingLineStr.repeat(delimitingLineLength)).append("\n");
-        stringBuilder.append(toStringStatsFromActorsArray((Actor[]) consumers, "consumers")).append("\n");
-        stringBuilder.append(sectionDelimitingLineStr.repeat(delimitingLineLength)).append("\n");
         stringBuilder.append(bufferNet.toStringNetStatistics()).append("\n");
+        stringBuilder.append(sectionDelimitingLineStr.repeat(delimitingLineLength)).append("\n");
+        stringBuilder.append(toStringStatsFromActorsArray((Actor[]) consumers, "consumers"));
 
         return stringBuilder.toString();
     }
