@@ -1,6 +1,9 @@
 package actors;
 
+import com.github.rkumsher.collection.IterableUtils;
 import org.jcsp.lang.*;
+
+import java.util.HashSet;
 
 
 public class Buffer extends Actor implements CSProcess {
@@ -18,6 +21,8 @@ public class Buffer extends Actor implements CSProcess {
     private int runningPredecessors;
     private int runningSuccessors;
 
+    private HashSet<Integer> predecessorsToAsk;
+
     private final int[] buffer;
     private final int bufferSize;
     int putIn = 0;
@@ -26,7 +31,7 @@ public class Buffer extends Actor implements CSProcess {
 
     public Buffer(int layer, int index, int size, ChannelOutputInt[] reqOut, AltingChannelInputInt[] itemIn,
                   AltingChannelInputInt[] reqIn, ChannelOutputInt[] itemOut) {
-        super();
+        super(0);
 
         assert reqIn.length == itemOut.length;
 
@@ -41,7 +46,11 @@ public class Buffer extends Actor implements CSProcess {
 
         this.reqOut = reqOut;
         this.itemOut = itemOut;
-        this.shift = itemIn.length;;
+        this.shift = itemIn.length;
+
+        predecessorsToAsk = new HashSet<>();
+        for (int i=Math.min(reqOut.length, bufferSize); i < reqOut.length; i++)
+            predecessorsToAsk.add(i);
 
         runningPredecessors = reqOut.length;
         runningSuccessors = itemOut.length;
@@ -67,23 +76,28 @@ public class Buffer extends Actor implements CSProcess {
 
         int index;
         int item;
-        for (int i=0; i<reqOut.length; i++) {
+        for (int i=0; i<Math.min(reqOut.length, bufferSize); i++) {
             reqOut[i].write(0);
         }
 
         while (runningSuccessors > 0 || runningPredecessors > 0) {
             index = alt.select();
-
             if (index < shift) {
+//                System.out.println("b:" + layer + " " + index);
+
                 if (putIn <= takeFrom + bufferSize) {
                     item = itemIn[index].read();
+                    predecessorsToAsk.add(index);
                     if (item < 0)
                         runningPredecessors--;
                     else {
+                        index = IterableUtils.randomFrom(predecessorsToAsk);
+                        predecessorsToAsk.remove(index);
+
                         buffer[putIn % buffer.length] = item;
                         putIn++;
-                        reqOut[index].write(0);
-                        this.actorState.incrementPassedItems();
+                        reqOut[index].write(Codes.REQ.value);
+//                        this.actorState.incrementPassedItems();
                     }
                 } else if (runningSuccessors == 0) {
                     //TODO send information to producer
@@ -98,14 +112,13 @@ public class Buffer extends Actor implements CSProcess {
                     this.actorState.incrementPassedItems();
 
                 } else if (runningPredecessors == 0) {
-                    System.out.println(index - shift + " " + -1);
-
                     reqIn[index - shift].read();
-                    itemOut[index - shift].write(-1);
+                    itemOut[index - shift].write(Codes.END.value);
                     runningSuccessors--;
                 }
             }
         }
-        System.out.println("Buffer ended.");
+
+//        System.out.println("Buffer ended.");
     }
 }

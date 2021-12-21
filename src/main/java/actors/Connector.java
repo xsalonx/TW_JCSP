@@ -23,14 +23,11 @@ public class Connector  implements CSProcess{
 
     public void run() {
         int item;
-        while (true) {
+        do {
             item = reqIn.read();
             reqOut.write(item);
             item = itemIn.read();
             itemOut.write(item);
-            if (item < 0)
-                break;
-        }
-//        System.out.println("connector from " + from + " to " + to + " ended");
+        } while (item >= 0);
     }
 }

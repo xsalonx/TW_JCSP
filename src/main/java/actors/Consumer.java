@@ -9,8 +9,8 @@ public class Consumer extends Actor implements CSProcess {
 
     private final int index;
 
-    public Consumer(int index, ChannelOutputInt reqOut, ChannelInputInt itemIn) {
-        super();
+    public Consumer(int index, ChannelOutputInt reqOut, ChannelInputInt itemIn, int delay) {
+        super(delay);
         this.index = index;
         this.reqOut = reqOut;
         this.itemIn = itemIn;
@@ -19,13 +19,14 @@ public class Consumer extends Actor implements CSProcess {
     public void run() {
         int item;
         while (true) {
-            reqOut.write(0);
+            reqOut.write(Codes.REQ.value);
             item = itemIn.read();
-            System.out.println("c " + index + " item: " + item);
             if (item < 0)
                 break;
             this.actorState.incrementPassedItems();
+            sleepActor();
+            System.out.println("c:" + index);
         }
-        System.out.println("Consumer " + index + " ended.");
+//        System.out.println("Consumer " + index + " ended.");
     }
 }

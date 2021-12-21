@@ -10,8 +10,8 @@ public class Producer extends Actor implements CSProcess {
     private final int index;
     private final int productionsNumber;
 
-    public Producer(int index, ChannelInputInt reqIn, ChannelOutputInt itemOut, int productionsNumber) {
-        super();
+    public Producer(int index, ChannelInputInt reqIn, ChannelOutputInt itemOut, int productionsNumber, int delay) {
+        super(delay);
         this.itemOut = itemOut;
         this.reqIn = reqIn;
         this.index = index;
@@ -29,8 +29,8 @@ public class Producer extends Actor implements CSProcess {
             System.out.println("p " + (k+1) + "/" + productionsNumber + " " + index + " sent: " + item);
         }
         reqIn.read();
-        itemOut.write(-1);
-        System.out.println("producer " + index + " ended.");
+        itemOut.write(Codes.REQ.value);
+//        System.out.println("producer " + index + " ended.");
     }
 
 }
