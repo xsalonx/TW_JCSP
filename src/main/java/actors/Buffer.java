@@ -2,11 +2,12 @@ package actors;
 
 import org.jcsp.lang.*;
 
-/** Buffer class: Manages communication between Producer2
- * and Consumer2 classes.
- */
 
-public class Buffer implements CSProcess {
+public class Buffer extends Actor implements CSProcess {
+
+    private final int layer;
+    private final int index;
+
     private final AltingChannelInputInt[] itemIn;
     private final AltingChannelInputInt[] reqIn;
     private final ChannelOutputInt[] itemOut;
@@ -23,9 +24,14 @@ public class Buffer implements CSProcess {
     int takeFrom = 0;
 
 
-    public Buffer(int size,  final ChannelOutputInt[] reqOut, final AltingChannelInputInt[] itemIn,
-                  final AltingChannelInputInt[] reqIn, final ChannelOutputInt[] itemOut) {
+    public Buffer(int layer, int index, int size, ChannelOutputInt[] reqOut, AltingChannelInputInt[] itemIn,
+                  AltingChannelInputInt[] reqIn, ChannelOutputInt[] itemOut) {
+        super();
+
         assert reqIn.length == itemOut.length;
+
+        this.layer = layer;
+        this.index = index;
 
         this.buffer = new int[size];
         this.bufferSize = size;
@@ -71,13 +77,13 @@ public class Buffer implements CSProcess {
             if (index < shift) {
                 if (putIn <= takeFrom + bufferSize) {
                     item = itemIn[index].read();
-                    System.out.println("b from " + index + ": " + item);
                     if (item < 0)
                         runningPredecessors--;
                     else {
                         buffer[putIn % buffer.length] = item;
                         putIn++;
                         reqOut[index].write(0);
+                        this.actorState.incrementPassedItems();
                     }
                 } else if (runningSuccessors == 0) {
                     //TODO send information to producer
@@ -86,11 +92,10 @@ public class Buffer implements CSProcess {
             } else {
                 if (takeFrom < putIn) {
                     reqIn[index - shift].read();
-                    System.out.println("b " + " get req from " + (index - shift));
                     item = buffer[takeFrom % buffer.length];
                     takeFrom++;
                     itemOut[index - shift].write(item);
-                    System.out.println("b " + "send to " + (index - shift));
+                    this.actorState.incrementPassedItems();
 
                 } else if (runningPredecessors == 0) {
                     System.out.println(index - shift + " " + -1);

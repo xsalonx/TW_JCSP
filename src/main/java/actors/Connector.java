@@ -2,10 +2,9 @@ package actors;
 
 import org.jcsp.lang.*;
 
-public class Connector implements CSProcess{
 
-    private final int from;
-    private final int to;
+public class Connector  implements CSProcess{
+
 
     private final ChannelInputInt reqIn;
     private final ChannelOutputInt reqOut;
@@ -14,10 +13,8 @@ public class Connector implements CSProcess{
     private final ChannelOutputInt itemOut;
 
 
-    public Connector(int from, int to, ChannelOutputInt reqOut, final ChannelInputInt itemIn,
-                     final ChannelInputInt reqIn, final ChannelOutputInt itemOut) {
-        this.from = from;
-        this.to = to;
+    public Connector(ChannelOutputInt reqOut, ChannelInputInt itemIn,
+                     ChannelInputInt reqIn, ChannelOutputInt itemOut) {
         this.reqIn = reqIn;
         this.reqOut = reqOut;
         this.itemIn = itemIn;
@@ -28,15 +25,12 @@ public class Connector implements CSProcess{
         int item;
         while (true) {
             item = reqIn.read();
-//            System.out.println("connector req in " + item);
             reqOut.write(item);
-//            System.out.println("connector req out ");
             item = itemIn.read();
-//            System.out.println("connector item in " + item);
             itemOut.write(item);
             if (item < 0)
                 break;
         }
-        System.out.println("connector from " + from + " to " + to + " ended");
+//        System.out.println("connector from " + from + " to " + to + " ended");
     }
 }

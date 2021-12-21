@@ -3,14 +3,15 @@ package actors;
 import org.jcsp.lang.*;
 
 
-public class Producer implements CSProcess {
+public class Producer extends Actor implements CSProcess {
 
     private final ChannelOutputInt itemOut;
     private final ChannelInputInt reqIn;
     private final int index;
     private final int productionsNumber;
 
-    public Producer(int index, final ChannelInputInt reqIn, final ChannelOutputInt itemOut, int productionsNumber) {
+    public Producer(int index, ChannelInputInt reqIn, ChannelOutputInt itemOut, int productionsNumber) {
+        super();
         this.itemOut = itemOut;
         this.reqIn = reqIn;
         this.index = index;
@@ -22,12 +23,12 @@ public class Producer implements CSProcess {
         for (int k = 0; k < productionsNumber; k++) {
             reqIn.read();
             item = (int) (Math.random() * 100) + 1;
-            System.out.println("p " + index + " produced: " + item);
             itemOut.write(item);
+            this.actorState.incrementPassedItems();
+
             System.out.println("p " + (k+1) + "/" + productionsNumber + " " + index + " sent: " + item);
         }
         reqIn.read();
-        System.out.println("producer " + index + " wants to end");
         itemOut.write(-1);
         System.out.println("producer " + index + " ended.");
     }
