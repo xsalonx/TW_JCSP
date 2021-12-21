@@ -30,17 +30,17 @@ public final class Main {
     static BufferNet bufferNet;
 
     public static void main(String[] args) {
-        final int producersNumber = 5;
-        final int consumersNumber = 5;
-        final int productionsNumber = 500;
+        final int producersNumber = 1;
+        final int consumersNumber = 1;
+        final int productionsNumber = 5;
 
 
-        int[] layersSizes = new int[5];
+        int[] layersSizes = new int[3];
         layersSizes[0] = producersNumber;
-        layersSizes[1] = 4;
-        layersSizes[2] = 4;
-        layersSizes[3] = 4;
-        layersSizes[4] = consumersNumber;
+        layersSizes[1] = 1;
+//        layersSizes[2] = 4;
+//        layersSizes[3] = 4;
+        layersSizes[2] = consumersNumber;
 
         bufferNet = new BufferNet(layersSizes);
 

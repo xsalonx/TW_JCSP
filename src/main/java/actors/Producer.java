@@ -26,10 +26,10 @@ public class Producer extends Actor implements CSProcess {
             itemOut.write(item);
             this.actorState.incrementPassedItems();
 
-            System.out.println("p " + (k+1) + "/" + productionsNumber + " " + index + " sent: " + item);
+//            System.out.println("p " + (k+1) + "/" + productionsNumber + " " + index + " sent: " + item);
         }
         reqIn.read();
-        itemOut.write(Codes.REQ.value);
+        itemOut.write(Codes.END.value);
 //        System.out.println("producer " + index + " ended.");
     }
 

@@ -9,7 +9,7 @@ import java.util.HashSet;
 public class Buffer extends Actor implements CSProcess {
 
     private final int layer;
-    private final int index;
+    private final int index_;
 
     private final AltingChannelInputInt[] itemIn;
     private final AltingChannelInputInt[] reqIn;
@@ -36,7 +36,7 @@ public class Buffer extends Actor implements CSProcess {
         assert reqIn.length == itemOut.length;
 
         this.layer = layer;
-        this.index = index;
+        this.index_ = index;
 
         this.buffer = new int[size];
         this.bufferSize = size;
@@ -76,28 +76,27 @@ public class Buffer extends Actor implements CSProcess {
 
         int index;
         int item;
-        for (int i=0; i<Math.min(reqOut.length, bufferSize); i++) {
-            reqOut[i].write(0);
+        for (int i=0; i<reqOut.length; i++) {
+            reqOut[i].write(Codes.REQ.value);
         }
 
         while (runningSuccessors > 0 || runningPredecessors > 0) {
             index = alt.select();
             if (index < shift) {
-//                System.out.println("b:" + layer + " " + index);
 
                 if (putIn <= takeFrom + bufferSize) {
                     item = itemIn[index].read();
-                    predecessorsToAsk.add(index);
-                    if (item < 0)
+//                    predecessorsToAsk.add(index);
+                    if (item == Codes.END.value)
                         runningPredecessors--;
+
                     else {
-                        index = IterableUtils.randomFrom(predecessorsToAsk);
-                        predecessorsToAsk.remove(index);
+//                        index = IterableUtils.randomFrom(predecessorsToAsk);
+//                        predecessorsToAsk.remove(index);
 
                         buffer[putIn % buffer.length] = item;
                         putIn++;
                         reqOut[index].write(Codes.REQ.value);
-//                        this.actorState.incrementPassedItems();
                     }
                 } else if (runningSuccessors == 0) {
                     //TODO send information to producer

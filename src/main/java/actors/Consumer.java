@@ -21,12 +21,12 @@ public class Consumer extends Actor implements CSProcess {
         while (true) {
             reqOut.write(Codes.REQ.value);
             item = itemIn.read();
-            if (item < 0)
+            if (item == Codes.END.value)
                 break;
             this.actorState.incrementPassedItems();
             sleepActor();
-            System.out.println("c:" + index);
+            System.out.println("c:" + index + " received " + item);
         }
-//        System.out.println("Consumer " + index + " ended.");
+        System.out.println("Consumer " + index + " ended.");
     }
 }

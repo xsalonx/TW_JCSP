@@ -28,6 +28,6 @@ public class Connector  implements CSProcess{
             reqOut.write(item);
             item = itemIn.read();
             itemOut.write(item);
-        } while (item >= 0);
+        } while (item != Actor.Codes.END.value);
     }
 }
