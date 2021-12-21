@@ -21,7 +21,8 @@ public class Buffer extends Actor implements CSProcess {
     private int runningPredecessors;
     private int runningSuccessors;
 
-    private HashSet<Integer> predecessorsToAsk;
+    private Guard[] guards;
+    private Alternative alt;
 
     private final int[] buffer;
     private final int bufferSize;
@@ -48,9 +49,8 @@ public class Buffer extends Actor implements CSProcess {
         this.itemOut = itemOut;
         this.shift = itemIn.length;
 
-        predecessorsToAsk = new HashSet<>();
-        for (int i=Math.min(reqOut.length, bufferSize); i < reqOut.length; i++)
-            predecessorsToAsk.add(i);
+        this.guards = getGuards();
+        this.alt = new Alternative(guards);
 
         runningPredecessors = reqOut.length;
         runningSuccessors = itemOut.length;
@@ -70,54 +70,58 @@ public class Buffer extends Actor implements CSProcess {
         return guards;
     }
 
-    public void run() {
-        final Guard[] guards = getGuards();
-        final Alternative alt = new Alternative(guards);
-
-        int index;
-        int item;
+    private void sendInitReq() {
         for (int i=0; i<reqOut.length; i++) {
             reqOut[i].write(Codes.REQ.value);
         }
+    }
 
+    public void run() {
+
+        sendInitReq();
+
+        int index;
         while (runningSuccessors > 0 || runningPredecessors > 0) {
             index = alt.select();
             if (index < shift) {
-
-                if (putIn <= takeFrom + bufferSize) {
-                    item = itemIn[index].read();
-//                    predecessorsToAsk.add(index);
-                    if (item == Codes.END.value)
-                        runningPredecessors--;
-
-                    else {
-//                        index = IterableUtils.randomFrom(predecessorsToAsk);
-//                        predecessorsToAsk.remove(index);
-
-                        buffer[putIn % buffer.length] = item;
-                        putIn++;
-                        reqOut[index].write(Codes.REQ.value);
-                    }
-                } else if (runningSuccessors == 0) {
-                    //TODO send information to producer
-                }
-
+                handlePredecessors(index);
             } else {
-                if (takeFrom < putIn) {
-                    reqIn[index - shift].read();
-                    item = buffer[takeFrom % buffer.length];
-                    takeFrom++;
-                    itemOut[index - shift].write(item);
-                    this.actorState.incrementPassedItems();
-
-                } else if (runningPredecessors == 0) {
-                    reqIn[index - shift].read();
-                    itemOut[index - shift].write(Codes.END.value);
-                    runningSuccessors--;
-                }
+               handleSuccessors(index);
             }
         }
+    }
 
-//        System.out.println("Buffer ended.");
+    private void handlePredecessors(int index) {
+        int item;
+        if (putIn <= takeFrom + bufferSize) {
+            item = itemIn[index].read();
+            if (item == Codes.END.value)
+                runningPredecessors--;
+
+            else {
+
+                buffer[putIn % buffer.length] = item;
+                putIn++;
+                reqOut[index].write(Codes.REQ.value);
+            }
+        } else if (runningSuccessors == 0) {
+            //TODO send information to producer
+        }
+    }
+
+    private void handleSuccessors(int index) {
+        int item;
+        if (takeFrom < putIn) {
+            reqIn[index - shift].read();
+            item = buffer[takeFrom % buffer.length];
+            takeFrom++;
+            itemOut[index - shift].write(item);
+            this.actorState.incrementPassedItems();
+
+        } else if (runningPredecessors == 0) {
+            reqIn[index - shift].read();
+            itemOut[index - shift].write(Codes.END.value);
+            runningSuccessors--;
+        }
     }
 }
